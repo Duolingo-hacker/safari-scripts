@@ -8,22 +8,22 @@
     y: innerHeight >> 1
   };
 
-  // ===== CLICK CORE =====
+  // ==== CLICK CORE ====
   function click() {
     if (!S.run) return;
+
     const el = document.elementFromPoint(S.x, S.y);
     if (!el) return;
 
-    const e = { bubbles: true, cancelable: true, clientX: S.x, clientY: S.y };
+    const e = { bubbles:true, cancelable:true, clientX:S.x, clientY:S.y };
     el.dispatchEvent(new MouseEvent('mousedown', e));
     el.dispatchEvent(new MouseEvent('mouseup', e));
     el.dispatchEvent(new MouseEvent('click', e));
   }
 
-  // ===== TIMER =====
-  S.t = setInterval(click, 40); // Safari real limit
+  S.t = setInterval(click, 40);
 
-  // ===== UI =====
+  // ==== UI ROOT ====
   const ui = document.createElement('div');
   ui.style.cssText = `
     position:fixed;
@@ -31,12 +31,18 @@
     left:50%;
     transform:translateX(-50%);
     z-index:2147483647;
+    pointer-events:none;
+    contain:layout paint size;
+  `;
+
+  const bar = document.createElement('div');
+  bar.style.cssText = `
     background:#000;
     padding:6px;
     border-radius:6px;
     display:flex;
     gap:4px;
-    contain:layout paint size;
+    pointer-events:auto;
   `;
 
   const btn = (txt, fn) => {
@@ -49,11 +55,11 @@
       padding:4px 8px;
       font-size:12px;
     `;
-    b.onclick = e => { e.stopPropagation(); fn(); };
+    b.onclick = e => { e.stopPropagation(); fn(e); };
     return b;
   };
 
-  ui.append(
+  bar.append(
     btn('SET', () => {
       S.x = innerWidth >> 1;
       S.y = innerHeight >> 1;
@@ -64,5 +70,6 @@
     })
   );
 
+  ui.appendChild(bar);
   document.body.appendChild(ui);
 })();
