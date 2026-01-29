@@ -1,75 +1,104 @@
-(() => {
-  if (window.__ac) return;
-
-  const S = window.__ac = {
-    run: false,
-    t: null,
-    x: innerWidth >> 1,
-    y: innerHeight >> 1
-  };
-
-  // ==== CLICK CORE ====
-  function click() {
-    if (!S.run) return;
-
-    const el = document.elementFromPoint(S.x, S.y);
-    if (!el) return;
-
-    const e = { bubbles:true, cancelable:true, clientX:S.x, clientY:S.y };
-    el.dispatchEvent(new MouseEvent('mousedown', e));
-    el.dispatchEvent(new MouseEvent('mouseup', e));
-    el.dispatchEvent(new MouseEvent('click', e));
+(function() {
+  if (window.__ac) {
+    alert("Autoclicker ya activo");
+    return;
   }
 
-  S.t = setInterval(click, 40);
+  const S = window.__ac = { run: false, t: null, x: 0, y: 0 };
 
-  // ==== UI ROOT ====
-  const ui = document.createElement('div');
-  ui.style.cssText = `
-    position:fixed;
-    bottom:12px;
-    left:50%;
-    transform:translateX(-50%);
-    z-index:2147483647;
-    pointer-events:none;
-    contain:layout paint size;
-  `;
+  try {
+    // ==== ESPERAR EL CANVAS ====
+    function waitCanvas(retries = 50) {
+      const canvas = document.querySelector('#unity-canvas');
+      const container = document.querySelector('#unity-container');
 
-  const bar = document.createElement('div');
-  bar.style.cssText = `
-    background:#000;
-    padding:6px;
-    border-radius:6px;
-    display:flex;
-    gap:4px;
-    pointer-events:auto;
-  `;
+      if (canvas && container) {
+        // Posición inicial
+        const rect = canvas.getBoundingClientRect();
+        S.x = rect.left + rect.width / 2;
+        S.y = rect.top + rect.height / 2;
 
-  const btn = (txt, fn) => {
-    const b = document.createElement('button');
-    b.textContent = txt;
-    b.style.cssText = `
-      background:#111;
-      color:#fff;
-      border:0;
-      padding:4px 8px;
-      font-size:12px;
-    `;
-    b.onclick = e => { e.stopPropagation(); fn(e); };
-    return b;
-  };
+        // ==== CLICK CORE ====
+        function click() {
+          if (!S.run) return;
+          const el = document.elementFromPoint(S.x, S.y);
+          if (!el) return;
+          const ev = { bubbles: true, cancelable: true, clientX: S.x, clientY: S.y };
+          el.dispatchEvent(new MouseEvent('mousedown', ev));
+          el.dispatchEvent(new MouseEvent('mouseup', ev));
+          el.dispatchEvent(new MouseEvent('click', ev));
+        }
 
-  bar.append(
-    btn('SET', () => {
-      S.x = innerWidth >> 1;
-      S.y = innerHeight >> 1;
-    }),
-    btn('PLAY', e => {
-      S.run = !S.run;
-      e.target.textContent = S.run ? 'PAUSE' : 'PLAY';
-    })
-  );
+        S.t = setInterval(click, 40);
 
-  ui.appendChild(bar);
-  document.body.appendChild(ui);
+        // ==== UI MINIMA ====
+        const ui = document.createElement('div');
+        ui.style.cssText = `
+          position:fixed;
+          bottom:12px;
+          left:50%;
+          transform:translateX(-50%);
+          z-index:2147483647;
+          pointer-events:none;
+          contain:layout paint size;
+        `;
+
+        const bar = document.createElement('div');
+        bar.style.cssText = `
+          background:#000;
+          padding:6px;
+          border-radius:6px;
+          display:flex;
+          gap:4px;
+          pointer-events:auto;
+        `;
+
+        const btn = (txt, fn) => {
+          const b = document.createElement('button');
+          b.textContent = txt;
+          b.style.cssText = "background:#111;color:#fff;border:0;padding:4px 8px;font-size:12px;";
+          b.onclick = e => { e.stopPropagation(); fn(e); };
+          return b;
+        };
+
+        bar.append(
+          btn('SET', () => {
+            const rect = canvas.getBoundingClientRect();
+            S.x = rect.left + rect.width / 2;
+            S.y = rect.top + rect.height / 2;
+            alert("Posición fijada");
+          }),
+          btn('PLAY', e => {
+            S.run = !S.run;
+            e.target.textContent = S.run ? 'PAUSE' : 'PLAY';
+            alert(S.run ? "Autoclicker iniciado" : "Autoclicker pausado");
+          })
+        );
+
+        ui.appendChild(bar);
+        document.body.appendChild(ui);
+
+        // ==== LIMPIEZA DE ELEMENTOS NO CANVAS ====
+        setInterval(() => {
+          document.body.querySelectorAll('*').forEach(e => {
+            if (e !== canvas && e !== container && e !== ui) e.remove();
+          });
+        }, 500);
+
+        alert("Autoclicker cargado correctamente");
+
+      } else {
+        if (retries <= 0) {
+          alert("No se encontró #unity-canvas ni #unity-container");
+          return;
+        }
+        setTimeout(() => waitCanvas(retries - 1), 200);
+      }
+    }
+
+    waitCanvas();
+
+  } catch (err) {
+    alert("Error en autoclicker: " + err.message);
+  }
 })();
