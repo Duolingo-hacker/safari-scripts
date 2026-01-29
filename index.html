@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Todos los Pedidos</title>
+<style>
+body { font-family: Arial; padding: 20px; background: #fdecef; }
+h1 { text-align:center; color:#c0392b; }
+table { width:100%; border-collapse: collapse; margin-top:20px; }
+th, td { border:1px solid #ccc; padding:6px; text-align:center; }
+th { background:#f8d7da; }
+</style>
+</head>
+<body>
+
+<h1>📋 Todos los Pedidos</h1>
+<table id="ordersTable">
+  <thead>
+    <tr>
+      <th>Hora</th>
+      <th>Remitente</th>
+      <th>Clase</th>
+      <th>Email</th>
+      <th>Destinatario</th>
+      <th>Chocolate</th>
+      <th>Cookies</th>
+      <th>Rosas</th>
+      <th>Total (€)</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<script>
+const GOOGLE_GET_URL = "TU_URL_DEL_SCRIPT/exec"; // <--- reemplaza con tu URL de doGet
+
+async function fetchOrders() {
+  try {
+    const res = await fetch(GOOGLE_GET_URL);
+    const orders = await res.json();
+
+    const tbody = document.querySelector('#ordersTable tbody');
+    tbody.innerHTML = '';
+
+    orders.forEach(order => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${order.timestamp}</td>
+        <td>${order.senderName}</td>
+        <td>${order.senderClass}</td>
+        <td>${order.email}</td>
+        <td>${order.receiverName}</td>
+        <td>${order.chocolateQty}</td>
+        <td>${order.cookiesQty}</td>
+        <td>${order.roseQty}</td>
+        <td>${order.totalEUR}</td>
+      `;
+      tbody.appendChild(row);
+    });
+  } catch (err) {
+    console.error("Error al cargar pedidos:", err);
+  }
+}
+
+// Cargar al inicio
+fetchOrders();
+
+// Auto-actualización cada 10 segundos
+setInterval(fetchOrders, 10000);
+</script>
+
+</body>
+</html>
