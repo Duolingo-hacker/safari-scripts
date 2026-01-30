@@ -1,22 +1,27 @@
 (() => {
-  if (window.__ac) { alert("Autoclicker ya activo"); return; }
-  const S = window.__ac = { run: false, interval: null, x: 0, y: 0 };
+  if (window.__ac) {
+    alert("Autoclicker ya activo");
+    return;
+  }
 
-  const tryInit = () => {
+  const S = window.__ac = { run: false, x: 0, y: 0 };
+
+  function init() {
     const canvas = document.querySelector('#unity-canvas');
     const container = document.querySelector('#unity-container');
+
     if (!canvas || !container) {
-      setTimeout(tryInit, 500);
+      setTimeout(init, 500);
       return;
     }
 
-    // ==== Posición inicial ====
-    const rect = canvas.getBoundingClientRect();
-    S.x = rect.left + rect.width / 2;
-    S.y = rect.top + rect.height / 2;
+    // Posición inicial (centro)
+    const r = canvas.getBoundingClientRect();
+    S.x = r.left + r.width / 2;
+    S.y = r.top + r.height / 2;
 
-    // ==== CLICK CORE ====
-    function click() {
+    // ===== AUTCLICK =====
+    setInterval(() => {
       if (!S.run) return;
       const el = document.elementFromPoint(S.x, S.y);
       if (!el) return;
@@ -24,51 +29,78 @@
       el.dispatchEvent(new MouseEvent('mousedown', ev));
       el.dispatchEvent(new MouseEvent('mouseup', ev));
       el.dispatchEvent(new MouseEvent('click', ev));
-    }
-    S.interval = setInterval(click, 40);
+    }, 40);
 
-    // ==== UI mínima ====
+    // ===== UI (AISLADA DE UNITY) =====
     const ui = document.createElement('div');
-    ui.style.cssText = "position:fixed;bottom:10px;left:50%;transform:translateX(-50%);z-index:999999;pointer-events:none;";
 
-    const bar = document.createElement('div');
-    bar.style.cssText = "background:#000;padding:6px;border-radius:8px;display:flex;gap:6px;pointer-events:auto;";
+    ui.style.cssText = `
+      all: initial;
+      position: fixed;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%) scale(1) !important;
+      z-index: 2147483647 !important;
+      display: flex;
+      gap: 8px;
+      background: #000;
+      padding: 10px;
+      border-radius: 10px;
+      font-family: -apple-system, system-ui, sans-serif;
+      font-size: 16px;
+      min-width: 140px;
+      justify-content: center;
+      box-shadow: 0 0 0 2px #000;
+    `;
 
-    const btn = (txt, fn) => {
+    function button(text, fn) {
       const b = document.createElement('button');
-      b.textContent = txt;
-      b.style.cssText = "background:#222;color:#fff;border:none;padding:6px 10px;font-size:14px;";
+      b.textContent = text;
+      b.style.cssText = `
+        all: initial;
+        background: #222;
+        color: #fff;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 14px;
+      `;
       b.onclick = e => { e.stopPropagation(); fn(e); };
       return b;
-    };
+    }
 
-    bar.append(
-      btn('SET', () => {
-        const r = canvas.getBoundingClientRect();
-        S.x = r.left + r.width / 2;
-        S.y = r.top + r.height / 2;
-        alert("Posición fijada");
-      }),
-      btn('PLAY', e => {
-        S.run = !S.run;
-        e.target.textContent = S.run ? 'PAUSE' : 'PLAY';
-        alert(S.run ? "Autoclicker iniciado" : "Autoclicker pausado");
-      })
-    );
+    const setBtn = button("SET", () => {
+      const r2 = canvas.getBoundingClientRect();
+      S.x = r2.left + r2.width / 2;
+      S.y = r2.top + r2.height / 2;
+      alert("Posición fijada");
+    });
 
-    ui.appendChild(bar);
-    document.body.appendChild(ui);
+    const playBtn = button("PLAY", () => {
+      S.run = !S.run;
+      playBtn.textContent = S.run ? "PAUSE" : "PLAY";
+      alert(S.run ? "Autoclicker ON" : "Autoclicker OFF");
+    });
 
-    // ==== LIMPIEZA REPETIDA DEL DOM ====
+    ui.append(setBtn, playBtn);
+
+    // 🔴 CLAVE: NO body — documentElement
+    document.documentElement.appendChild(ui);
+
+    // ===== LIMPIEZA HTML (EXCEPTO UNITY) =====
     setInterval(() => {
-      document.body.querySelectorAll('*').forEach(e => {
-        if (e !== canvas && e !== container && e !== ui) e.remove();
+      document.body.querySelectorAll('*').forEach(el => {
+        if (
+          el !== canvas &&
+          el !== container &&
+          !container.contains(el)
+        ) {
+          el.remove();
+        }
       });
-    }, 500);
+    }, 800);
 
-    alert("Autoclicker listo y contenido innecesario eliminado");
+    alert("Autoclicker listo (UI visible)");
+  }
 
-  };
-
-  tryInit();
+  init();
 })();
